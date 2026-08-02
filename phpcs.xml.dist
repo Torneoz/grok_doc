@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<ruleset name="Grok Documents">
+  <description>Drupal coding standards for the Grok Documents module.</description>
+  <file>grok_doc.module</file>
+  <file>grok_doc.install</file>
+  <file>src</file>
+  <file>tests</file>
+  <arg name="extensions" value="php,module,install"/>
+  <arg name="colors"/>
+  <rule ref="Drupal"/>
+  <rule ref="DrupalPractice">
+    <!-- API exceptions are rendered as administrator-facing errors. -->
+    <exclude name="DrupalPractice.General.ExceptionT.ExceptionT"/>
+  </rule>
+  <rule ref="Drupal.Semantics.FunctionT.NotLiteralString">
+    <exclude-pattern>tests/*</exclude-pattern>
+  </rule>
+</ruleset>

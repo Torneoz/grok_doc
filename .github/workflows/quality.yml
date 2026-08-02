@@ -1,0 +1,38 @@
+name: Quality
+
+on:
+  push:
+    branches: [1.x]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - php: '8.1'
+            core: '^10.6'
+            dependencies: lowest
+          - php: '8.3'
+            core: '^11.2'
+            dependencies: highest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+          tools: composer:v2
+      - run: composer require --no-update drupal/core:${{ matrix.core }}
+      - if: matrix.dependencies == 'lowest'
+        run: composer update --prefer-lowest --prefer-dist --no-interaction
+      - if: matrix.dependencies == 'highest'
+        run: composer update --prefer-dist --no-interaction
+      - run: composer test
+      - run: composer phpcs
+
