@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Drupal\grok_doc\Form;
 
 use Drupal\Component\Serialization\Json;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityForm;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\grok_doc\Service\XaiCollectionsClient;
 use Drupal\key\KeyRepositoryInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -17,12 +19,20 @@ final class GrokCollectionForm extends EntityForm {
 
   /**
    * Constructs the Collection form. */
-  public function __construct(private readonly KeyRepositoryInterface $keyRepository) {}
+  public function __construct(
+    private readonly KeyRepositoryInterface $keyRepository,
+    private readonly XaiCollectionsClient $client,
+    private readonly ConfigFactoryInterface $configFactory,
+  ) {}
 
   /**
    * {@inheritdoc} */
   public static function create(ContainerInterface $container): static {
-    return new static($container->get('key.repository'));
+    return new static(
+      $container->get('key.repository'),
+      $container->get('grok_doc.api_client'),
+      $container->get('config.factory'),
+    );
   }
 
   /**
@@ -34,10 +44,14 @@ final class GrokCollectionForm extends EntityForm {
     foreach ($this->keyRepository->getKeys() as $key) {
       $keys[$key->id()] = $key->label();
     }
+    $query = $this->getRequest()->query;
+    $suggested_remote_id = $collection->isNew() ? trim((string) $query->get('remote_id', '')) : '';
+    $suggested_label = $collection->isNew() ? trim((string) $query->get('label', '')) : '';
+    $settings = $this->configFactory->get('grok_doc.settings');
     $form['label'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Label'),
-      '#default_value' => $collection->label(),
+      '#default_value' => $collection->label() ?: $suggested_label,
       '#required' => TRUE,
     ];
     $form['id'] = [
@@ -46,26 +60,44 @@ final class GrokCollectionForm extends EntityForm {
       '#machine_name' => ['exists' => '\Drupal\grok_doc\Entity\GrokCollection::load'],
       '#disabled' => !$collection->isNew(),
     ];
+    if ($collection->isNew()) {
+      $form['collection_source'] = [
+        '#type' => 'radios',
+        '#title' => $this->t('Collection source'),
+        '#options' => [
+          'create' => $this->t('Create a new Collection in xAI'),
+          'existing' => $this->t('Register an existing xAI Collection'),
+        ],
+        '#default_value' => $suggested_remote_id === '' ? 'create' : 'existing',
+        '#required' => TRUE,
+      ];
+    }
     $form['remote_id'] = [
       '#type' => 'textfield',
       '#title' => $this->t('xAI collection ID'),
-      '#description' => $this->t('Register an existing ID beginning with collection_. Remote collection creation is intentionally deferred until after the alpha ingestion workflow is proven.'),
-      '#default_value' => $collection->getRemoteId(),
-      '#required' => TRUE,
+      '#description' => $this->t('For an existing Collection, enter its ID beginning with collection_. A newly created Collection receives its ID from xAI.'),
+      '#default_value' => $collection->getRemoteId() ?: $suggested_remote_id,
+      '#required' => !$collection->isNew(),
+      '#states' => $collection->isNew() ? [
+        'visible' => [':input[name="collection_source"]' => ['value' => 'existing']],
+        'required' => [':input[name="collection_source"]' => ['value' => 'existing']],
+      ] : [],
     ];
     $form['management_key'] = [
       '#type' => 'select',
       '#title' => $this->t('xAI Management API key'),
-      '#description' => $this->t('Use a dedicated least-privilege Management key with AddFileToCollection permission.'),
+      '#description' => $this->t('Use a dedicated least-privilege Management key. Creating Collections requires CreateCollection; ingestion requires AddFileToCollection.'),
       '#options' => $keys,
       '#empty_option' => $this->t('- Select -'),
-      '#default_value' => $collection->getManagementKeyId(),
+      '#default_value' => $collection->getManagementKeyId()
+        ?: (string) $query->get('management_key', '')
+        ?: (string) $settings->get('default_management_key'),
       '#required' => TRUE,
     ];
     $form['description'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Description'),
-      '#default_value' => $collection->get('description'),
+      '#default_value' => $collection->get('description') ?: (string) $query->get('description', ''),
     ];
     $form['default_metadata'] = [
       '#type' => 'textarea',
@@ -76,7 +108,9 @@ final class GrokCollectionForm extends EntityForm {
     $form['max_batch_bytes'] = [
       '#type' => 'number',
       '#title' => $this->t('Maximum import batch size in bytes'),
-      '#default_value' => $collection->getMaxBatchBytes(),
+      '#default_value' => $collection->isNew()
+        ? (int) ($settings->get('max_batch_bytes') ?? 524288000)
+        : $collection->getMaxBatchBytes(),
       '#min' => 1,
       '#required' => TRUE,
     ];
@@ -98,7 +132,8 @@ final class GrokCollectionForm extends EntityForm {
   public function validateForm(array &$form, FormStateInterface $form_state): void {
     parent::validateForm($form, $form_state);
     $remote_id = trim((string) $form_state->getValue('remote_id'));
-    if (!preg_match('/^collection_[A-Za-z0-9-]+$/', $remote_id)) {
+    $creating = $this->entity->isNew() && $form_state->getValue('collection_source') === 'create';
+    if (!$creating && !preg_match('/^collection_[A-Za-z0-9-]+$/', $remote_id)) {
       $form_state->setErrorByName('remote_id', $this->t('Enter a valid xAI collection ID beginning with collection_.'));
     }
     try {
@@ -115,8 +150,35 @@ final class GrokCollectionForm extends EntityForm {
   /**
    * {@inheritdoc} */
   public function save(array $form, FormStateInterface $form_state): int {
+    $created_remotely = $this->entity->isNew() && $form_state->getValue('collection_source') === 'create';
+    if ($created_remotely) {
+      try {
+        $key = $this->keyRepository->getKey((string) $form_state->getValue('management_key'));
+        $api_key = $key ? (string) $key->getKeyValue() : '';
+        $response = $this->client->createCollection(
+          $api_key,
+          trim((string) $form_state->getValue('label')),
+          trim((string) $form_state->getValue('description')),
+        );
+        $remote_id = (string) ($response['collection_id'] ?? $response['id'] ?? '');
+        if (!preg_match('/^collection_[A-Za-z0-9-]+$/', $remote_id)) {
+          throw new \RuntimeException('xAI did not return a valid Collection ID.');
+        }
+        $this->entity->set('remote_id', $remote_id);
+      }
+      catch (\Throwable $exception) {
+        $this->messenger()->addError($this->t('The xAI Collection could not be created: @message', [
+          '@message' => $exception->getMessage(),
+        ]));
+        $form_state->setRebuild();
+        return SAVED_NEW;
+      }
+    }
     $status = parent::save($form, $form_state);
-    $this->messenger()->addStatus($this->t('Saved the %label collection registration.', ['%label' => $this->entity->label()]));
+    $message = $created_remotely
+      ? $this->t('Created the %label Collection in xAI and saved its local registration.', ['%label' => $this->entity->label()])
+      : $this->t('Saved the %label collection registration.', ['%label' => $this->entity->label()]);
+    $this->messenger()->addStatus($message);
     $form_state->setRedirect('entity.grok_doc_collection.collection');
     return $status;
   }

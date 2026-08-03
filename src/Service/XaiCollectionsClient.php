@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace Drupal\grok_doc\Service;
 
 use Drupal\Component\Serialization\Json;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\RequestException;
 
 /**
- * Minimal client for xAI Management Collections document operations.
+ * Client for xAI Management Collections and document operations.
  */
 final class XaiCollectionsClient {
 
@@ -22,8 +23,41 @@ final class XaiCollectionsClient {
   public function __construct(
     private readonly ClientInterface $httpClient,
     TranslationInterface $string_translation,
+    private readonly ConfigFactoryInterface $configFactory,
   ) {
     $this->stringTranslation = $string_translation;
+  }
+
+  /**
+   * Creates a Collection.
+   */
+  public function createCollection(string $api_key, string $name, string $description = ''): array {
+    $this->assertApiKey($api_key);
+    $name = trim($name);
+    if ($name === '') {
+      throw new \InvalidArgumentException('A Collection name is required.');
+    }
+    $payload = ['collection_name' => $name];
+    if (trim($description) !== '') {
+      $payload['collection_description'] = trim($description);
+    }
+    return $this->request('POST', '/collections', $api_key, ['json' => $payload]);
+  }
+
+  /**
+   * Lists Collections visible to a Management API key.
+   */
+  public function listCollections(string $api_key): array {
+    $this->assertApiKey($api_key);
+    return $this->request('GET', '/collections', $api_key);
+  }
+
+  /**
+   * Deletes a Collection and its remotely stored documents.
+   */
+  public function deleteCollection(string $api_key, string $collection_id): void {
+    $this->assertCredentials($api_key, $collection_id);
+    $this->request('DELETE', '/collections/' . rawurlencode($collection_id), $api_key);
   }
 
   /**
@@ -44,7 +78,7 @@ final class XaiCollectionsClient {
     try {
       return $this->request('POST', '/collections/' . rawurlencode($collection_id) . '/documents', $api_key, [
         'multipart' => $multipart,
-        'timeout' => 300,
+        'timeout' => $this->setting('upload_timeout', 300),
       ]);
     }
     finally {
@@ -75,7 +109,10 @@ final class XaiCollectionsClient {
    * Sends an authenticated request and decodes a bounded JSON response. */
   private function request(string $method, string $path, string $api_key, array $options = []): array {
     $options['headers']['Authorization'] = 'Bearer ' . $api_key;
-    $options += ['connect_timeout' => 20, 'timeout' => 120];
+    $options += [
+      'connect_timeout' => $this->setting('api_connect_timeout', 20),
+      'timeout' => $this->setting('api_timeout', 120),
+    ];
     try {
       $response = $this->httpClient->request($method, self::BASE_URL . $path, $options);
       $body = trim((string) $response->getBody());
@@ -102,12 +139,27 @@ final class XaiCollectionsClient {
   /**
    * Validates credentials and the remote Collection identifier. */
   private function assertCredentials(string $api_key, string $collection_id): void {
-    if ($api_key === '') {
-      throw new \InvalidArgumentException('An xAI Management API key is required.');
-    }
+    $this->assertApiKey($api_key);
     if (!preg_match('/^collection_[A-Za-z0-9-]+$/', $collection_id)) {
       throw new \InvalidArgumentException('Invalid xAI collection ID.');
     }
+  }
+
+  /**
+   * Validates a Management API key value without exposing it.
+   */
+  private function assertApiKey(string $api_key): void {
+    if (trim($api_key) === '') {
+      throw new \InvalidArgumentException('An xAI Management API key is required.');
+    }
+  }
+
+  /**
+   * Returns a positive integer setting or its safe fallback.
+   */
+  private function setting(string $name, int $fallback): int {
+    $value = (int) $this->configFactory->get('grok_doc.settings')->get($name);
+    return $value > 0 ? $value : $fallback;
   }
 
 }

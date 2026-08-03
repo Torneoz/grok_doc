@@ -4,6 +4,12 @@ grok_doc.collection_add:
   appears_on:
     - entity.grok_doc_collection.collection
 
+grok_doc.remote_collections:
+  route_name: grok_doc.remote_collections
+  title: 'List remote collections'
+  appears_on:
+    - entity.grok_doc_collection.collection
+
 grok_doc.import:
   route_name: grok_doc.import
   title: 'Import documents'

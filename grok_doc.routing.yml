@@ -6,11 +6,27 @@ entity.grok_doc_collection.collection:
   requirements:
     _permission: 'view grok collection status'
 
+grok_doc.settings:
+  path: '/admin/config/ai/grok/documents/settings'
+  defaults:
+    _form: '\Drupal\grok_doc\Form\GrokDocSettingsForm'
+    _title: 'Grok Documents settings'
+  requirements:
+    _permission: 'administer grok collections'
+
 entity.grok_doc_collection.add_form:
   path: '/admin/config/ai/grok/documents/collections/add'
   defaults:
     _entity_form: 'grok_doc_collection.add'
     _title: 'Add Grok collection'
+  requirements:
+    _permission: 'administer grok collections'
+
+grok_doc.remote_collections:
+  path: '/admin/config/ai/grok/documents/collections/remote'
+  defaults:
+    _form: '\Drupal\grok_doc\Form\RemoteCollectionsForm'
+    _title: 'Remote xAI Collections'
   requirements:
     _permission: 'administer grok collections'
 
@@ -26,7 +42,7 @@ entity.grok_doc_collection.delete_form:
   path: '/admin/config/ai/grok/documents/collections/{grok_doc_collection}/delete'
   defaults:
     _entity_form: 'grok_doc_collection.delete'
-    _title: 'Delete Grok collection registration'
+    _title: 'Delete Grok collection'
   requirements:
     _permission: 'administer grok collections'
 
@@ -53,4 +69,3 @@ grok_doc.process:
     _title: 'Process Grok document queue'
   requirements:
     _permission: 'administer grok collections'
-

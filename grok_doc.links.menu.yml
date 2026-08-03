@@ -4,3 +4,8 @@ grok_doc.collections:
   route_name: entity.grok_doc_collection.collection
   parent: system.admin_config_ai
 
+grok_doc.settings:
+  title: 'Grok Documents settings'
+  description: 'Configure xAI credentials, timeouts, ingestion limits, and queue processing.'
+  route_name: grok_doc.settings
+  parent: system.admin_config_ai

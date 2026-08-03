@@ -2,6 +2,18 @@ grok_doc.settings:
   type: config_object
   label: 'Grok Documents settings'
   mapping:
+    default_management_key:
+      type: string
+      label: 'Default Management API Key entity ID'
+    api_connect_timeout:
+      type: integer
+      label: 'xAI API connection timeout'
+    api_timeout:
+      type: integer
+      label: 'xAI API request timeout'
+    upload_timeout:
+      type: integer
+      label: 'xAI document upload timeout'
     max_file_bytes:
       type: integer
       label: 'Maximum file size'
@@ -14,4 +26,3 @@ grok_doc.settings:
     queue_batch_size:
       type: integer
       label: 'Queue items processed per manual run'
-

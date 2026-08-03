@@ -13,3 +13,7 @@ grok_doc.import_tab:
   title: 'Bulk import'
   base_route: entity.grok_doc_collection.collection
 
+grok_doc.settings_tab:
+  route_name: grok_doc.settings
+  title: 'Settings'
+  base_route: entity.grok_doc_collection.collection

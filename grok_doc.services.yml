@@ -1,7 +1,7 @@
 services:
   grok_doc.api_client:
     class: Drupal\grok_doc\Service\XaiCollectionsClient
-    arguments: ['@http_client', '@string_translation']
+    arguments: ['@http_client', '@string_translation', '@config.factory']
 
   grok_doc.manager:
     class: Drupal\grok_doc\Service\CollectionDocumentManager
