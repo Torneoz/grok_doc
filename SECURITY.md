@@ -21,7 +21,9 @@ the issue. Revoke any credential that may have been disclosed.
 
 ## Security boundaries
 
-Administrators select an xAI Management API key capable of adding documents to
-Collections. The key is resolved only by server-side queue processing and must
-never be exposed to browser clients or logs. Collection registration and import
-permissions do not replace access control on source Drupal files or Media.
+Administrators select an xAI Management API key with only the Collections
+permissions required by their workflow. The secret is resolved server-side from
+Drupal Key for explicit Collection operations, read-only connection tests, and
+queued ingestion; it must never be exposed to browser clients, configuration
+exports, or logs. Collection registration and import permissions do not replace
+access control on source Drupal files or Media.

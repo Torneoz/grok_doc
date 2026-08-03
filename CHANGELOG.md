@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.0-alpha2 (unreleased)
+## 1.0.0-alpha2 - 2026-08-03
 
 - Adds a bounded **Process the ingestion queue immediately** control to the
   single-document and bulk-import forms, backed by the same reusable processor

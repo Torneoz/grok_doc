@@ -1,37 +1,33 @@
-# Grok Collections 1.0.0-alpha1
+# Grok Collections 1.0.0-alpha2
 
-The first alpha of Grok Collections (`grok_doc`) provides standalone xAI
-Collection administration and queued document ingestion for Grok Integration.
+Alpha 2 improves the reliability and usability of xAI Collection document
+ingestion while retaining the explicit, least-privilege controls introduced in
+the first alpha.
 
-## Included
+## Highlights
+
+- Adds **Add document** to the Collection Documents list for queueing a single
+  Drupal-managed file with optional metadata.
+- Adds a bounded **Process the ingestion queue immediately** option to single
+  and bulk upload forms. Outstanding indexing checks continue through cron.
+- Recovers the existing xAI file ID after an identical-content response so an
+  interrupted request can resume indexing without duplicating remote content.
+- Sends empty metadata as the xAI-required JSON object `{}` rather than `[]` and
+  validates metadata values before upload.
+- Fixes injected form services after AJAX rebuilds and replaces the removed
+  legacy file-size formatter with Drupal's supported `ByteSizeMarkup` API.
+- Handles HTTP clients that close consumed multipart streams after a successful
+  upload response.
+
+## Existing capabilities
 
 - Create xAI Collections or register existing Collection IDs in Drupal.
-- Store Management API credentials through Drupal Key.
-- List remote Collections and explicitly approve registrations for search.
-- Upload multiple Drupal-managed files with metadata, size limits, SHA-256
-  duplicate detection, queues, retries, and indexing-state tracking.
-- Delete local registrations independently from explicitly confirmed remote
-  Collection deletion.
-- Configure API timeouts, ingestion limits, retry attempts, and manual queue
-  batch sizes.
-- Use the dedicated **Grok Collections Search Explorer** from Drupal AI's
-  standard Explorer selection.
-
-## Explorer
-
-The Explorer uses Drupal AI's `AiApiExplorerPluginBase` and automatic Explorer
-route/menu discovery. It appears when Grok is configured and at least one
-enabled Collection registration is approved for search.
-
-Trusted users can select one or more approved Collections, a Grok model, a
-result limit, and a question. It displays the synthesized answer, citations,
-xAI hosted-tool results, and normalized response metadata. Access requires both
-Drupal AI's **Access AI prompt** permission and the restricted **Use the Grok
-Collections Search Explorer** permission.
-
-Collections Search must also be permitted in Grok Integration. Until it is,
-the Explorer remains visible but disables submission and explains the required
-setting.
+- Store a separate xAI Management API credential through Drupal Key.
+- List, approve, and explicitly delete remote Collections.
+- Queue documents with size limits, SHA-256 duplicate detection, retries, and
+  indexing-state tracking.
+- Test approved Collections through the Grok Collections Search Explorer when
+  Drupal AI's optional API Explorer module is enabled.
 
 ## Requirements
 
@@ -49,6 +45,6 @@ composer require 'torneoz/grok_doc:^1.0@alpha'
 drush en grok_doc -y
 ```
 
-This is an alpha release. Test with non-sensitive documents and a temporary
-Collection before using production data. xAI Collection storage, document
-operations, searches, and model tokens may be billed separately.
+This remains an alpha release. Test with non-sensitive documents and a
+temporary Collection before using production data. xAI Collection storage,
+document operations, searches, and model tokens may be billed separately.
