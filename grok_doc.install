@@ -14,16 +14,82 @@ function grok_doc_requirements(string $phase): array {
   if ($phase !== 'runtime') {
     return [];
   }
-  $failed = \Drupal::entityQuery('grok_doc_document')
-    ->accessCheck(FALSE)
-    ->condition('status', 'failed')
-    ->count()
-    ->execute();
-  return [
-    'grok_doc_failed' => [
-      'title' => t('Grok Collections'),
-      'value' => $failed ? t('@count failed ingestion record(s)', ['@count' => $failed]) : t('No failed ingestion records'),
-      'severity' => $failed ? REQUIREMENT_WARNING : REQUIREMENT_OK,
-    ],
+
+  $requirements = [];
+  try {
+    $entity_type_manager = \Drupal::entityTypeManager();
+    if (!$entity_type_manager->hasDefinition('grok_doc_document')) {
+      throw new \RuntimeException('The Collection document entity type is unavailable.');
+    }
+    $storage = $entity_type_manager->getStorage('grok_doc_document');
+    $failed = (int) $storage->getQuery()
+      ->accessCheck(FALSE)
+      ->condition('status', 'failed')
+      ->count()
+      ->execute();
+  }
+  catch (\Throwable $exception) {
+    \Drupal::logger('grok_doc')->error('Unable to inspect Collection ingestion records: @message', [
+      '@message' => $exception->getMessage(),
+    ]);
+    $requirements['grok_doc_storage'] = [
+      'title' => t('Grok Collections storage'),
+      'value' => t('Ingestion records could not be inspected'),
+      'description' => t('Rebuild caches and run database updates. Check the Grok Collections log if the problem continues.'),
+      'severity' => REQUIREMENT_ERROR,
+    ];
+    return $requirements;
+  }
+
+  $failed_requirement = [
+    'title' => t('Grok Collections ingestion'),
+    'value' => $failed ? t('@count failed ingestion record(s)', ['@count' => $failed]) : t('No failed ingestion records'),
+    'severity' => $failed ? REQUIREMENT_WARNING : REQUIREMENT_OK,
   ];
+  if ($failed) {
+    $failed_requirement['description'] = t('Review failed records and their most recent errors before retrying them.');
+  }
+  $requirements['grok_doc_failed'] = $failed_requirement;
+
+  try {
+    $queued = (int) \Drupal::queue('grok_doc_ingest')->numberOfItems();
+    $queue_requirement = [
+      'title' => t('Grok Collections queue'),
+      'value' => t('@count queued ingestion item(s)', ['@count' => $queued]),
+      'severity' => REQUIREMENT_OK,
+    ];
+    if ($queued) {
+      $queue_requirement['description'] = t('Cron or a bounded manual queue run will process these items.');
+    }
+    $requirements['grok_doc_queue'] = $queue_requirement;
+  }
+  catch (\Throwable $exception) {
+    \Drupal::logger('grok_doc')->error('Unable to inspect the Collection ingestion queue: @message', [
+      '@message' => $exception->getMessage(),
+    ]);
+    $requirements['grok_doc_queue'] = [
+      'title' => t('Grok Collections queue'),
+      'value' => t('Queue state could not be inspected'),
+      'description' => t('Check the Grok Collections log and the configured queue backend.'),
+      'severity' => REQUIREMENT_WARNING,
+    ];
+  }
+
+  return $requirements;
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function grok_doc_uninstall(): void {
+  try {
+    \Drupal::queue('grok_doc_ingest')->deleteQueue();
+  }
+  catch (\Throwable $exception) {
+    // Queue backends are not required to survive until uninstall hooks run.
+    // Do not leave the module installed solely because cleanup was unavailable.
+    \Drupal::logger('grok_doc')->warning('Unable to remove the Collection ingestion queue during uninstall: @message', [
+      '@message' => $exception->getMessage(),
+    ]);
+  }
 }

@@ -9,7 +9,7 @@ services:
 
   grok_doc.queue_processor:
     class: Drupal\grok_doc\Service\IngestionQueueProcessor
-    arguments: ['@queue', '@grok_doc.manager']
+    arguments: ['@queue', '@grok_doc.manager', '@logger.channel.grok_doc']
 
   logger.channel.grok_doc:
     parent: logger.channel_base

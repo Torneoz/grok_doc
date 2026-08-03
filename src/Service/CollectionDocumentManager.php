@@ -19,7 +19,7 @@ use Drupal\key\KeyRepositoryInterface;
 /**
  * Creates idempotent ingestion records and processes their state transitions.
  */
-final class CollectionDocumentManager {
+final class CollectionDocumentManager implements DocumentProcessorInterface {
 
   public const QUEUE = 'grok_doc_ingest';
 
@@ -70,7 +70,31 @@ final class CollectionDocumentManager {
       'uid' => $owner_id,
     ]);
     $document->save();
-    $this->queueFactory->get(self::QUEUE)->createItem(['document_id' => (int) $document->id()]);
+    try {
+      $item_id = $this->queueFactory->get(self::QUEUE)->createItem([
+        'document_id' => (int) $document->id(),
+      ]);
+      if ($item_id === FALSE) {
+        throw new \RuntimeException('The queue backend rejected the ingestion item.');
+      }
+    }
+    catch (\Throwable $exception) {
+      // Avoid leaving an unqueued pending record that can never be processed.
+      try {
+        $document->delete();
+      }
+      catch (\Throwable $cleanup_exception) {
+        $this->logger->critical('Unable to remove unqueued Collection document @id: @message', [
+          '@id' => $document->id(),
+          '@message' => $cleanup_exception->getMessage(),
+        ]);
+      }
+      $this->logger->error('Unable to queue Collection document @id: @message', [
+        '@id' => $document->id(),
+        '@message' => $exception->getMessage(),
+      ]);
+      throw new \RuntimeException('The document could not be added to the ingestion queue.', 0, $exception);
+    }
     return $document;
   }
 

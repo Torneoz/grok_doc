@@ -201,9 +201,11 @@ final class AddDocumentForm extends FormBase {
   private function processQueueImmediately(): void {
     $limit = max(1, (int) $this->config('grok_doc.settings')->get('queue_batch_size'));
     $result = $this->queueProcessor->process($limit);
-    $this->messenger()->addStatus($this->t('Immediately processed @count queue item(s); @requeued remain queued for indexing checks.', [
+    $this->messenger()->addStatus($this->t('Immediately processed @count queue item(s); @requeued remain queued, @failed failed, and @discarded malformed item(s) were discarded.', [
       '@count' => $result['processed'],
       '@requeued' => $result['requeued'],
+      '@failed' => $result['failed'],
+      '@discarded' => $result['discarded'],
     ]));
   }
 

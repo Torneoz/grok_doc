@@ -56,9 +56,11 @@ final class ProcessQueueForm extends ConfirmFormBase {
   public function submitForm(array &$form, FormStateInterface $form_state): void {
     $limit = max(1, (int) $this->config('grok_doc.settings')->get('queue_batch_size'));
     $result = $this->queueProcessor->process($limit);
-    $this->messenger()->addStatus($this->t('Processed @count queue item(s); @requeued require further indexing checks.', [
+    $this->messenger()->addStatus($this->t('Processed @count queue item(s); @requeued remain queued, @failed failed, and @discarded malformed item(s) were discarded.', [
       '@count' => $result['processed'],
       '@requeued' => $result['requeued'],
+      '@failed' => $result['failed'],
+      '@discarded' => $result['discarded'],
     ]));
     $form_state->setRedirectUrl($this->getCancelUrl());
   }
