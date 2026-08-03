@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Drupal\grok_doc\Form;
 
-use Drupal\Component\Serialization\Json;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityForm;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\grok_doc\Service\XaiCollectionsClient;
+use Drupal\grok_doc\Utility\MetadataJson;
 use Drupal\key\KeyRepositoryInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -103,7 +103,13 @@ final class GrokCollectionForm extends EntityForm {
       '#type' => 'textarea',
       '#title' => $this->t('Default metadata (JSON object)'),
       '#default_value' => $collection->get('default_metadata') ?: '{}',
-      '#description' => $this->t('These values are merged with metadata entered for an import batch.'),
+      '#description' => $this->t('Optional key/value fields applied to every imported document. Use <code>{}</code> for no defaults. Batch metadata overrides matching keys.'),
+      '#rows' => 6,
+      '#resizable' => 'vertical',
+      '#attributes' => [
+        'placeholder' => "{\n  \"department\": \"legal\",\n  \"year\": 2026\n}",
+        'spellcheck' => 'false',
+      ],
     ];
     $form['max_batch_bytes'] = [
       '#type' => 'number',
@@ -137,10 +143,7 @@ final class GrokCollectionForm extends EntityForm {
       $form_state->setErrorByName('remote_id', $this->t('Enter a valid xAI collection ID beginning with collection_.'));
     }
     try {
-      $metadata = Json::decode((string) $form_state->getValue('default_metadata'));
-      if (!is_array($metadata) || array_is_list($metadata)) {
-        throw new \InvalidArgumentException();
-      }
+      MetadataJson::decodeObject((string) $form_state->getValue('default_metadata'));
     }
     catch (\Throwable) {
       $form_state->setErrorByName('default_metadata', $this->t('Metadata must be a valid JSON object.'));

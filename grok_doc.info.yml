@@ -1,5 +1,5 @@
 name: Grok Collections
-description: Manages xAI Collections and bulk document ingestion for the Grok AI Provider.
+description: Manages xAI Collections, document ingestion, and search exploration for Grok Integration.
 package: AI Providers
 type: module
 core_version_requirement: ^10.6 || ^11.2

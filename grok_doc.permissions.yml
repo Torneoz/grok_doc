@@ -9,7 +9,11 @@ upload grok collection documents:
 view grok collection status:
   title: 'View Grok collection and document status'
 
+use grok collections explorer:
+  title: 'Use the Grok Collections Search Explorer'
+  description: 'Run billable Grok searches against approved xAI Collections.'
+  restrict access: true
+
 delete grok collection documents:
   title: 'Delete documents from Grok collections'
   restrict access: true
-

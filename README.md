@@ -1,7 +1,7 @@
 # Grok Collections (`grok_doc`)
 
 Grok Collections is an independent Drupal module for xAI Collection management
-and bulk document ingestion. It complements the Grok AI Provider: `grok` performs AI
+and bulk document ingestion. It complements Grok Integration: `grok` performs AI
 operations and Collections Search, while `grok_doc` manages the documents that
 make those searches useful.
 
@@ -19,17 +19,18 @@ make those searches useful.
 - Upload and index asynchronously through Drupal's Queue API.
 - Track local, remote, indexing, ready, and failed states.
 - Mark registrations that are explicitly approved for Collections Search.
+- Test approved Collections in a dedicated Grok Collections Search Explorer,
+  with the synthesized answer, citations, hosted-tool results, and metadata.
 - Keep local registration deletion separate from destructive remote deletion,
   with an exact-ID confirmation for the remote operation.
 
 ## Installation
 
-Until the first packaged alpha is published, add the GitHub repository to the
-Drupal project and install the `1.x` development branch:
+Add the GitHub repository to the Drupal project and install the alpha release:
 
 ```bash
 composer config repositories.grok_doc vcs https://github.com/Torneoz/grok_doc.git
-composer require torneoz/grok_doc:1.x-dev
+composer require 'torneoz/grok_doc:^1.0@alpha'
 ```
 
 ```bash
@@ -56,6 +57,25 @@ documents the current permissions and Management API workflow.
 Use **Test Collections connection** before saving. The test makes a read-only
 Collections list request and reports either the number of accessible remote
 Collections or the upstream error; it never changes remote data.
+
+## Grok Collections Search Explorer
+
+When Drupal AI's optional **AI API Explorer** module is enabled, Grok
+Collections adds **Grok Collections Search Explorer** to the standard Explorer
+selection at `/admin/config/ai/explorers`. The Explorer appears when Grok is
+configured and at least one enabled Collection registration is approved for
+search.
+
+Grant **Use the Grok Collections Search Explorer** together with Drupal AI's
+**Access AI prompt** permission to trusted roles. Searches can incur xAI
+Collections Search and model-token charges. Users select one or more approved
+Collections, a Grok chat model, a result limit, and a question. The response
+shows Grok's answer, normalized citations, hosted-tool results, and response
+metadata without rendering model output as trusted HTML.
+
+The Explorer remains visible when Collections Search is not yet permitted in
+Grok Integration, but disables submission and explains the required provider
+setting.
 
 ## Collection management and ingestion
 

@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Drupal\grok_doc\Form;
 
-use Drupal\Component\Serialization\Json;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\grok_doc\Service\CollectionDocumentManager;
+use Drupal\grok_doc\Utility\MetadataJson;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -77,7 +77,13 @@ final class BulkImportForm extends FormBase {
       '#type' => 'textarea',
       '#title' => $this->t('Batch metadata (JSON object)'),
       '#default_value' => '{}',
-      '#description' => $this->t('These values override collection defaults for every document in this batch.'),
+      '#description' => $this->t('Optional key/value fields for every document in this batch. Use <code>{}</code> for none. These values override matching Collection defaults.'),
+      '#rows' => 6,
+      '#resizable' => 'vertical',
+      '#attributes' => [
+        'placeholder' => "{\n  \"department\": \"legal\",\n  \"year\": 2026\n}",
+        'spellcheck' => 'false',
+      ],
     ];
     $form['notice'] = [
       '#type' => 'item',
@@ -97,10 +103,7 @@ final class BulkImportForm extends FormBase {
    * {@inheritdoc} */
   public function validateForm(array &$form, FormStateInterface $form_state): void {
     try {
-      $metadata = Json::decode((string) $form_state->getValue('metadata'));
-      if (!is_array($metadata) || array_is_list($metadata)) {
-        throw new \InvalidArgumentException();
-      }
+      MetadataJson::decodeObject((string) $form_state->getValue('metadata'));
     }
     catch (\Throwable) {
       $form_state->setErrorByName('metadata', $this->t('Metadata must be a valid JSON object.'));
@@ -124,7 +127,7 @@ final class BulkImportForm extends FormBase {
    * {@inheritdoc} */
   public function submitForm(array &$form, FormStateInterface $form_state): void {
     $collection = $this->entityTypeManager->getStorage('grok_doc_collection')->load($form_state->getValue('collection'));
-    $metadata = Json::decode((string) $form_state->getValue('metadata'));
+    $metadata = MetadataJson::decodeObject((string) $form_state->getValue('metadata'));
     $queued = 0;
     $duplicates = 0;
     foreach ($this->loadFiles($form_state) as $file) {
