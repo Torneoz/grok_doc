@@ -8,21 +8,24 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Config\TypedConfigManagerInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Url;
+use Drupal\grok_doc\Service\XaiCollectionsClient;
 use Drupal\key\KeyRepositoryInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Configures Grok Documents and its xAI Management API defaults.
+ * Configures Grok Collections and its xAI Management API defaults.
  */
 final class GrokDocSettingsForm extends ConfigFormBase {
 
   /**
-   * Constructs the Grok Documents settings form.
+   * Constructs the Grok Collections settings form.
    */
   public function __construct(
     ConfigFactoryInterface $config_factory,
     TypedConfigManagerInterface $typed_config_manager,
     private readonly KeyRepositoryInterface $keyRepository,
+    private readonly XaiCollectionsClient $client,
   ) {
     parent::__construct($config_factory, $typed_config_manager);
   }
@@ -35,6 +38,7 @@ final class GrokDocSettingsForm extends ConfigFormBase {
       $container->get('config.factory'),
       $container->get('config.typed'),
       $container->get('key.repository'),
+      $container->get('grok_doc.api_client'),
     );
   }
 
@@ -70,10 +74,13 @@ final class GrokDocSettingsForm extends ConfigFormBase {
     $form['xai']['default_management_key'] = [
       '#type' => 'select',
       '#title' => $this->t('Default Management API key'),
-      '#description' => $this->t('Stored as a Drupal Key reference, never as a secret in Grok Documents configuration. Collection forms use this as their default; each Collection can override it.'),
+      '#description' => $this->t('An ordinary xAI Grok inference API key will not work here. Create a separate Management API key in the <a href=":url" target="_blank" rel="noopener noreferrer">xAI Console Management Keys page</a>, grant <code>AddFileToCollection</code> and any required Collections Endpoint permissions, store that secret as a Drupal Key, then select it here. Grok Collections stores only the Drupal Key reference. Collection forms use this default and may override it.', [
+        ':url' => Url::fromUri('https://console.x.ai/team/default/settings/management-keys')->toString(),
+      ]),
       '#options' => $keys,
       '#empty_option' => $this->t('- No default -'),
       '#default_value' => (string) $config->get('default_management_key'),
+      '#required' => TRUE,
     ];
     $form['xai']['api_connect_timeout'] = [
       '#type' => 'number',
@@ -102,6 +109,42 @@ final class GrokDocSettingsForm extends ConfigFormBase {
       '#max' => 3600,
       '#required' => TRUE,
     ];
+
+    $form['connection'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Test connection'),
+      '#description' => $this->t('Performs a read-only Collections list request using the selected Management API key. No remote data is changed.'),
+      '#open' => TRUE,
+      '#attributes' => ['id' => 'grok-collections-connection-wrapper'],
+      '#states' => [
+        'visible' => [
+          ':input[name="default_management_key"]' => ['!value' => ''],
+        ],
+      ],
+    ];
+    $form['connection']['test_connection'] = [
+      '#type' => 'submit',
+      '#name' => 'test_connection',
+      '#value' => $this->t('Test Collections connection'),
+      '#submit' => ['::testConnection'],
+      '#limit_validation_errors' => [
+        ['default_management_key'],
+      ],
+      '#ajax' => [
+        'callback' => '::connectionAjax',
+        'wrapper' => 'grok-collections-connection-wrapper',
+        'progress' => ['type' => 'throbber'],
+      ],
+    ];
+    if ($status = $form_state->get('grok_collections_connection_status')) {
+      $form['connection']['status'] = [
+        '#type' => 'container',
+        '#attributes' => [
+          'class' => ['messages', $status['type'] === 'error' ? 'messages--error' : 'messages--status'],
+        ],
+        'message' => ['#plain_text' => $status['message']],
+      ];
+    }
 
     $form['ingestion'] = [
       '#type' => 'details',
@@ -153,6 +196,42 @@ final class GrokDocSettingsForm extends ConfigFormBase {
       ->set('queue_batch_size', (int) $form_state->getValue('queue_batch_size'))
       ->save();
     parent::submitForm($form, $form_state);
+  }
+
+  /**
+   * Tests the selected Management API key without changing remote data.
+   */
+  public function testConnection(array &$form, FormStateInterface $form_state): void {
+    try {
+      $key = $this->keyRepository->getKey((string) $form_state->getValue('default_management_key'));
+      $api_key = $key ? (string) $key->getKeyValue() : '';
+      $response = $this->client->listCollections($api_key);
+      $count = count((array) ($response['collections'] ?? []));
+      $form_state->set('grok_collections_connection_status', [
+        'type' => 'status',
+        'message' => (string) $this->formatPlural(
+          $count,
+          'Connection successful. One xAI Collection is available.',
+          'Connection successful. @count xAI Collections are available.',
+        ),
+      ]);
+    }
+    catch (\Throwable $exception) {
+      $form_state->set('grok_collections_connection_status', [
+        'type' => 'error',
+        'message' => (string) $this->t('Connection failed: @message', [
+          '@message' => $exception->getMessage(),
+        ]),
+      ]);
+    }
+    $form_state->setRebuild();
+  }
+
+  /**
+   * Returns the AJAX-rebuilt connection controls.
+   */
+  public function connectionAjax(array &$form, FormStateInterface $form_state): array {
+    return $form['connection'];
   }
 
   /**

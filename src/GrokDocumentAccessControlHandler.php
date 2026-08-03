@@ -10,7 +10,7 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Session\AccountInterface;
 
 /**
- * Applies the dedicated Grok Documents permissions to records.
+ * Applies the dedicated Grok Collections permissions to records.
  */
 final class GrokDocumentAccessControlHandler extends EntityAccessControlHandler {
 

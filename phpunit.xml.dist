@@ -5,9 +5,8 @@
          colors="true"
          failOnWarning="true">
   <testsuites>
-    <testsuite name="Grok Documents unit tests">
+    <testsuite name="Grok Collections unit tests">
       <directory>tests/src/Unit</directory>
     </testsuite>
   </testsuites>
 </phpunit>
-

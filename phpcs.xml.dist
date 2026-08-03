@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
-<ruleset name="Grok Documents">
-  <description>Drupal coding standards for the Grok Documents module.</description>
+<ruleset name="Grok Collections">
+  <description>Drupal coding standards for the Grok Collections module.</description>
   <file>grok_doc.module</file>
   <file>grok_doc.install</file>
   <file>src</file>

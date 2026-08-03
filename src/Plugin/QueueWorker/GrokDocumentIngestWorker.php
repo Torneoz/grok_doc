@@ -15,7 +15,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *
  * @QueueWorker(
  *   id = "grok_doc_ingest",
- *   title = @Translation("Grok document ingestion"),
+ *   title = @Translation("Grok Collection document ingestion"),
  *   cron = {"time" = 30}
  * )
  */

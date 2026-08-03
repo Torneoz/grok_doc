@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Install and uninstall safeguards for Grok Documents.
+ * Install and uninstall safeguards for Grok Collections.
  */
 
 declare(strict_types=1);
@@ -21,7 +21,7 @@ function grok_doc_requirements(string $phase): array {
     ->execute();
   return [
     'grok_doc_failed' => [
-      'title' => t('Grok Documents'),
+      'title' => t('Grok Collections'),
       'value' => $failed ? t('@count failed ingestion record(s)', ['@count' => $failed]) : t('No failed ingestion records'),
       'severity' => $failed ? REQUIREMENT_WARNING : REQUIREMENT_OK,
     ],

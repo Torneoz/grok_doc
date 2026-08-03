@@ -1,6 +1,6 @@
-# Grok Documents (`grok_doc`)
+# Grok Collections (`grok_doc`)
 
-Grok Documents is an independent Drupal module for xAI Collection management
+Grok Collections is an independent Drupal module for xAI Collection management
 and bulk document ingestion. It complements the Grok AI Provider: `grok` performs AI
 operations and Collections Search, while `grok_doc` manages the documents that
 make those searches useful.
@@ -43,11 +43,17 @@ visible to a selected key, then use **Bulk import**. Cron processes queued files
 administrators may also run a bounded queue batch from the process route during
 alpha testing.
 
-Use **Configuration → AI → Grok Documents settings** to select the default
+Use **Configuration → AI → Grok Collections settings** to select the default
 Drupal Key used for xAI Management API operations and configure API timeouts,
 file and batch limits, retry attempts, and manual queue batch size. The default
 key and batch limit prepopulate new Collection registrations; Collection-level
 values remain explicit overrides.
+
+The settings page is listed under **AI → AI Platform Providers**. It requires a
+separate xAI Management API key: the normal Grok inference key does not authorize
+Collections management. Create the key in the xAI Console Management Keys page,
+grant only the required Collections permissions, then store it through Drupal
+Key.
 
 ## Security and cost notes
 

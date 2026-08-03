@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Hooks for the Grok Documents submodule.
+ * Hooks for the Grok Collections module.
  */
 
 declare(strict_types=1);
@@ -14,7 +14,7 @@ use Drupal\Core\Routing\RouteMatchInterface;
  */
 function grok_doc_help(string $route_name, RouteMatchInterface $route_match): ?string {
   if ($route_name === 'help.page.grok_doc') {
-    return '<p>' . t('Grok Documents manages xAI Collections and bulk document ingestion. Configure a least-privilege Management API credential through Drupal Key, and test with a temporary Collection before using production documents.') . '</p>';
+    return '<p>' . t('Grok Collections manages xAI Collections and bulk document ingestion. Configure a least-privilege Management API credential through Drupal Key, and test with a temporary Collection before using production documents.') . '</p>';
   }
   return NULL;
 }

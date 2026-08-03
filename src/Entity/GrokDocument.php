@@ -15,8 +15,8 @@ use Drupal\Core\Field\BaseFieldDefinition;
  *
  * @ContentEntityType(
  *   id = "grok_doc_document",
- *   label = @Translation("Grok document"),
- *   label_collection = @Translation("Grok documents"),
+ *   label = @Translation("Collection document"),
+ *   label_collection = @Translation("Collection documents"),
  *   handlers = {
  *     "list_builder" = "Drupal\grok_doc\GrokDocumentListBuilder",
  *     "access" = "Drupal\grok_doc\GrokDocumentAccessControlHandler"

@@ -1,4 +1,4 @@
-name: Grok Documents
+name: Grok Collections
 description: Manages xAI Collections and bulk document ingestion for the Grok AI Provider.
 package: AI Providers
 type: module
@@ -9,4 +9,3 @@ dependencies:
   - grok:grok
   - drupal:file
   - key:key
-

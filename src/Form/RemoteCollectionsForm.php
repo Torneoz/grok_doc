@@ -26,7 +26,7 @@ final class RemoteCollectionsForm extends FormBase {
     private readonly KeyRepositoryInterface $keyRepository,
     private readonly XaiCollectionsClient $client,
     private readonly EntityTypeManagerInterface $entityTypeManager,
-    private readonly ConfigFactoryInterface $configFactory,
+    private readonly ConfigFactoryInterface $settingsConfigFactory,
   ) {}
 
   /**
@@ -57,7 +57,7 @@ final class RemoteCollectionsForm extends FormBase {
       $keys[$key->id()] = $key->label();
     }
     $selected_key = (string) ($form_state->get('management_key')
-      ?? $this->configFactory->get('grok_doc.settings')->get('default_management_key')
+      ?? $this->settingsConfigFactory->get('grok_doc.settings')->get('default_management_key')
       ?? '');
     $form['management_key'] = [
       '#type' => 'select',

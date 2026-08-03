@@ -10,7 +10,7 @@ grok_doc.settings:
   path: '/admin/config/ai/grok/documents/settings'
   defaults:
     _form: '\Drupal\grok_doc\Form\GrokDocSettingsForm'
-    _title: 'Grok Documents settings'
+    _title: 'Grok Collections settings'
   requirements:
     _permission: 'administer grok collections'
 
@@ -50,7 +50,7 @@ entity.grok_doc_document.collection:
   path: '/admin/config/ai/grok/documents'
   defaults:
     _entity_list: 'grok_doc_document'
-    _title: 'Grok documents'
+    _title: 'Collection documents'
   requirements:
     _permission: 'view grok collection status'
 
@@ -58,7 +58,7 @@ grok_doc.import:
   path: '/admin/config/ai/grok/documents/import'
   defaults:
     _form: '\Drupal\grok_doc\Form\BulkImportForm'
-    _title: 'Import Grok documents'
+    _title: 'Import Collection documents'
   requirements:
     _permission: 'upload grok collection documents'
 
@@ -66,6 +66,6 @@ grok_doc.process:
   path: '/admin/config/ai/grok/documents/process'
   defaults:
     _form: '\Drupal\grok_doc\Form\ProcessQueueForm'
-    _title: 'Process Grok document queue'
+    _title: 'Process Collection document queue'
   requirements:
     _permission: 'administer grok collections'

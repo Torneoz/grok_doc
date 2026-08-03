@@ -22,7 +22,7 @@ final class GrokCollectionForm extends EntityForm {
   public function __construct(
     private readonly KeyRepositoryInterface $keyRepository,
     private readonly XaiCollectionsClient $client,
-    private readonly ConfigFactoryInterface $configFactory,
+    private readonly ConfigFactoryInterface $settingsConfigFactory,
   ) {}
 
   /**
@@ -47,7 +47,7 @@ final class GrokCollectionForm extends EntityForm {
     $query = $this->getRequest()->query;
     $suggested_remote_id = $collection->isNew() ? trim((string) $query->get('remote_id', '')) : '';
     $suggested_label = $collection->isNew() ? trim((string) $query->get('label', '')) : '';
-    $settings = $this->configFactory->get('grok_doc.settings');
+    $settings = $this->settingsConfigFactory->get('grok_doc.settings');
     $form['label'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Label'),

@@ -38,7 +38,7 @@ final class ProcessQueueForm extends ConfirmFormBase {
   /**
    * {@inheritdoc} */
   public function getQuestion(): string {
-    return (string) $this->t('Process queued Grok documents now?');
+    return (string) $this->t('Process queued Collection documents now?');
   }
 
   /**

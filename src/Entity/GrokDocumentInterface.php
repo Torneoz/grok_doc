@@ -8,7 +8,7 @@ use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityChangedInterface;
 
 /**
- * Defines a managed Grok document record.
+ * Defines a managed Collection document record.
  */
 interface GrokDocumentInterface extends ContentEntityInterface, EntityChangedInterface {
 
