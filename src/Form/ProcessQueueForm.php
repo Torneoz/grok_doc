@@ -6,9 +6,8 @@ namespace Drupal\grok_doc\Form;
 
 use Drupal\Core\Form\ConfirmFormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Queue\QueueFactory;
 use Drupal\Core\Url;
-use Drupal\grok_doc\Service\CollectionDocumentManager;
+use Drupal\grok_doc\Service\IngestionQueueProcessor;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -19,14 +18,13 @@ final class ProcessQueueForm extends ConfirmFormBase {
   /**
    * Constructs the manual queue form. */
   public function __construct(
-    protected QueueFactory $queueFactory,
-    protected CollectionDocumentManager $manager,
+    protected IngestionQueueProcessor $queueProcessor,
   ) {}
 
   /**
    * {@inheritdoc} */
   public static function create(ContainerInterface $container): static {
-    return new static($container->get('queue'), $container->get('grok_doc.manager'));
+    return new static($container->get('grok_doc.queue_processor'));
   }
 
   /**
@@ -56,18 +54,12 @@ final class ProcessQueueForm extends ConfirmFormBase {
   /**
    * {@inheritdoc} */
   public function submitForm(array &$form, FormStateInterface $form_state): void {
-    $queue = $this->queueFactory->get(CollectionDocumentManager::QUEUE);
     $limit = max(1, (int) $this->config('grok_doc.settings')->get('queue_batch_size'));
-    $processed = 0;
-    for ($i = 0; $i < $limit && ($item = $queue->claimItem(300)); $i++) {
-      $result = $this->manager->process((int) ($item->data['document_id'] ?? 0));
-      $queue->deleteItem($item);
-      if ($result === 'retry') {
-        $queue->createItem($item->data);
-      }
-      $processed++;
-    }
-    $this->messenger()->addStatus($this->t('Processed @count queue item(s).', ['@count' => $processed]));
+    $result = $this->queueProcessor->process($limit);
+    $this->messenger()->addStatus($this->t('Processed @count queue item(s); @requeued require further indexing checks.', [
+      '@count' => $result['processed'],
+      '@requeued' => $result['requeued'],
+    ]));
     $form_state->setRedirectUrl($this->getCancelUrl());
   }
 

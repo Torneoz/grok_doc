@@ -9,6 +9,7 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\grok_doc\Service\CollectionDocumentManager;
+use Drupal\grok_doc\Service\IngestionQueueProcessor;
 use Drupal\grok_doc\Utility\MetadataJson;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -23,6 +24,7 @@ final class BulkImportForm extends FormBase {
     protected EntityTypeManagerInterface $entityTypeManager,
     protected CollectionDocumentManager $manager,
     protected AccountProxyInterface $currentUser,
+    protected IngestionQueueProcessor $queueProcessor,
   ) {}
 
   /**
@@ -32,6 +34,7 @@ final class BulkImportForm extends FormBase {
       $container->get('entity_type.manager'),
       $container->get('grok_doc.manager'),
       $container->get('current_user'),
+      $container->get('grok_doc.queue_processor'),
     );
   }
 
@@ -89,6 +92,12 @@ final class BulkImportForm extends FormBase {
       '#type' => 'item',
       '#title' => $this->t('Cost notice'),
       '#markup' => $this->t('Uploaded content incurs xAI file and Collection storage charges until it is removed. Processing occurs through Drupal queues.'),
+    ];
+    $form['process_immediately'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Process the ingestion queue immediately'),
+      '#description' => $this->t('Starts one bounded queue batch after submission. Large imports and asynchronous xAI indexing continue through cron.'),
+      '#default_value' => FALSE,
     ];
     $form['actions'] = ['#type' => 'actions'];
     $form['actions']['submit'] = [
@@ -160,6 +169,14 @@ final class BulkImportForm extends FormBase {
       '@count' => $queued,
       '@duplicates' => $duplicates,
     ]));
+    if ($queued > 0 && $form_state->getValue('process_immediately')) {
+      $limit = max(1, (int) $this->config('grok_doc.settings')->get('queue_batch_size'));
+      $result = $this->queueProcessor->process($limit);
+      $this->messenger()->addStatus($this->t('Immediately processed @count queue item(s); @requeued remain queued for indexing checks.', [
+        '@count' => $result['processed'],
+        '@requeued' => $result['requeued'],
+      ]));
+    }
     $form_state->setRedirect('entity.grok_doc_document.collection');
   }
 

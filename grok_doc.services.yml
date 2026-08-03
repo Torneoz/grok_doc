@@ -7,6 +7,10 @@ services:
     class: Drupal\grok_doc\Service\CollectionDocumentManager
     arguments: ['@entity_type.manager', '@key.repository', '@queue', '@file_system', '@grok_doc.api_client', '@logger.channel.grok_doc', '@config.factory']
 
+  grok_doc.queue_processor:
+    class: Drupal\grok_doc\Service\IngestionQueueProcessor
+    arguments: ['@queue', '@grok_doc.manager']
+
   logger.channel.grok_doc:
     parent: logger.channel_base
     arguments: ['grok_doc']

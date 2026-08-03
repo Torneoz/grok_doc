@@ -85,6 +85,11 @@ visible to the selected key. The Documents list provides **Add document** for a
 single file and **Import documents** for batches. Cron processes queued files;
 administrators may also run a bounded queue batch manually.
 
+Both upload forms include **Process the ingestion queue immediately**. It is
+enabled by default for a single document and optional for bulk imports. The
+control starts one bounded queue batch during submission; xAI indexing remains
+asynchronous and any outstanding checks continue through cron.
+
 ## Security and cost notes
 
 - A Management API key is more privileged than an ordinary inference key.

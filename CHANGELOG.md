@@ -2,6 +2,9 @@
 
 ## 1.0.0-alpha2 (unreleased)
 
+- Adds a bounded **Process the ingestion queue immediately** control to the
+  single-document and bulk-import forms, backed by the same reusable processor
+  as the manual queue form.
 - Fixes empty document metadata being uploaded as `[]`; xAI Collection fields
   are now sent as the required JSON object with string values.
 - Handles HTTP clients that close consumed multipart streams without masking a

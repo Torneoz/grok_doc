@@ -10,6 +10,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\file\FileInterface;
 use Drupal\grok_doc\Service\CollectionDocumentManager;
+use Drupal\grok_doc\Service\IngestionQueueProcessor;
 use Drupal\grok_doc\Utility\MetadataJson;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -25,6 +26,7 @@ final class AddDocumentForm extends FormBase {
     protected EntityTypeManagerInterface $entityTypeManager,
     protected CollectionDocumentManager $manager,
     protected AccountProxyInterface $currentUser,
+    protected IngestionQueueProcessor $queueProcessor,
   ) {}
 
   /**
@@ -35,6 +37,7 @@ final class AddDocumentForm extends FormBase {
       $container->get('entity_type.manager'),
       $container->get('grok_doc.manager'),
       $container->get('current_user'),
+      $container->get('grok_doc.queue_processor'),
     );
   }
 
@@ -97,6 +100,12 @@ final class AddDocumentForm extends FormBase {
       '#type' => 'item',
       '#title' => $this->t('Cost notice'),
       '#markup' => $this->t('Uploaded content incurs xAI file and Collection storage charges until it is removed. Processing occurs through Drupal queues.'),
+    ];
+    $form['process_immediately'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Process the ingestion queue immediately'),
+      '#description' => $this->t('Starts a bounded queue run after submission. Upload begins in this web request; asynchronous xAI indexing may still require cron.'),
+      '#default_value' => TRUE,
     ];
     $form['actions'] = ['#type' => 'actions'];
     $form['actions']['submit'] = [
@@ -165,6 +174,9 @@ final class AddDocumentForm extends FormBase {
           '%file' => $file->getFilename(),
         ]));
       }
+      if ($form_state->getValue('process_immediately')) {
+        $this->processQueueImmediately();
+      }
       $form_state->setRedirect('entity.grok_doc_document.collection');
     }
     catch (\Throwable $exception) {
@@ -181,6 +193,18 @@ final class AddDocumentForm extends FormBase {
   private function loadFile(FormStateInterface $form_state): ?FileInterface {
     $ids = array_values(array_filter(array_map('intval', (array) $form_state->getValue('file'))));
     return $ids ? $this->entityTypeManager->getStorage('file')->load(reset($ids)) : NULL;
+  }
+
+  /**
+   * Runs the configured bounded queue batch and reports its result.
+   */
+  private function processQueueImmediately(): void {
+    $limit = max(1, (int) $this->config('grok_doc.settings')->get('queue_batch_size'));
+    $result = $this->queueProcessor->process($limit);
+    $this->messenger()->addStatus($this->t('Immediately processed @count queue item(s); @requeued remain queued for indexing checks.', [
+      '@count' => $result['processed'],
+      '@requeued' => $result['requeued'],
+    ]));
   }
 
 }
