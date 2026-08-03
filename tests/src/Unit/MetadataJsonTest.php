@@ -19,12 +19,39 @@ final class MetadataJsonTest extends TestCase {
     self::assertSame([], MetadataJson::decodeObject('{}'));
     self::assertSame([
       'department' => 'legal',
+      'year' => '2026',
+      'published' => 'true',
+    ], MetadataJson::decodeObject('{"department":"legal","year":2026,"published":true}'));
+  }
+
+  /**
+   * Tests the exact JSON object shape required by xAI.
+   */
+  public function testEncodesStringMapAsObject(): void {
+    self::assertSame('{}', MetadataJson::encodeFields([]));
+    self::assertSame('{"year":"2026","published":"false"}', MetadataJson::encodeFields([
       'year' => 2026,
-    ], MetadataJson::decodeObject('{"department":"legal","year":2026}'));
-    self::assertSame([
-      'tags' => ['policy'],
-      'source' => ['type' => 'media'],
-    ], MetadataJson::decodeObject('{"tags":["policy"],"source":{"type":"media"}}'));
+      'published' => FALSE,
+    ]));
+  }
+
+  /**
+   * Tests rejection of nested Collection field values.
+   */
+  public function testRejectsNestedFields(): void {
+    foreach ([
+      '{"tags":["policy"]}',
+      '{"source":{"type":"media"}}',
+      '{"empty":null}',
+    ] as $json) {
+      try {
+        MetadataJson::decodeObject($json);
+        self::fail('Expected nested metadata to be rejected: ' . $json);
+      }
+      catch (\InvalidArgumentException) {
+        self::assertTrue(TRUE);
+      }
+    }
   }
 
   /**

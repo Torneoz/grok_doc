@@ -8,6 +8,7 @@ use Drupal\Component\Serialization\Json;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
+use Drupal\grok_doc\Utility\MetadataJson;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\RequestException;
 
@@ -72,17 +73,32 @@ final class XaiCollectionsClient {
     $multipart = [
       ['name' => 'name', 'contents' => $filename],
       ['name' => 'content_type', 'contents' => $mime],
-      ['name' => 'fields', 'contents' => Json::encode($fields)],
+      ['name' => 'fields', 'contents' => MetadataJson::encodeFields($fields)],
       ['name' => 'data', 'contents' => $handle, 'filename' => $filename],
     ];
     try {
-      return $this->request('POST', '/collections/' . rawurlencode($collection_id) . '/documents', $api_key, [
-        'multipart' => $multipart,
-        'timeout' => $this->setting('upload_timeout', 300),
-      ]);
+      try {
+        return $this->request('POST', '/collections/' . rawurlencode($collection_id) . '/documents', $api_key, [
+          'multipart' => $multipart,
+          'timeout' => $this->setting('upload_timeout', 300),
+        ]);
+      }
+      catch (\RuntimeException $exception) {
+        if ($exception->getCode() === 409
+          && preg_match('/file_id:\s*(file[_-][A-Za-z0-9-]+)/', $exception->getMessage(), $match)) {
+          return [
+            'file_id' => $match[1],
+            'status' => 'PENDING',
+            'reused_existing' => TRUE,
+          ];
+        }
+        throw $exception;
+      }
     }
     finally {
-      fclose($handle);
+      if (is_resource($handle)) {
+        fclose($handle);
+      }
     }
   }
 

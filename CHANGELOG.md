@@ -2,6 +2,12 @@
 
 ## 1.0.0-alpha2 (unreleased)
 
+- Fixes empty document metadata being uploaded as `[]`; xAI Collection fields
+  are now sent as the required JSON object with string values.
+- Handles HTTP clients that close consumed multipart streams without masking a
+  successful xAI upload response.
+- Recovers the existing xAI file ID from an identical-content conflict so an
+  interrupted upload can resume indexing without duplicating remote content.
 - Replaces the removed legacy `format_size()` helper with Drupal's
   `ByteSizeMarkup` API on the Collection Documents list.
 - Fixes AJAX form rebuilds losing injected services, including managed-file

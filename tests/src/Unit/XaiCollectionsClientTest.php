@@ -21,6 +21,75 @@ use PHPUnit\Framework\TestCase;
 final class XaiCollectionsClientTest extends TestCase {
 
   /**
+   * Tests document upload fields use the xAI string-map object shape.
+   */
+  public function testUploadsDocumentWithObjectFields(): void {
+    $path = tempnam(sys_get_temp_dir(), 'grok-doc-test-');
+    file_put_contents($path, 'document');
+    $http_client = $this->createMock(ClientInterface::class);
+    $http_client->expects(self::once())
+      ->method('request')
+      ->with(
+        'POST',
+        'https://management-api.x.ai/v1/collections/collection_123/documents',
+        self::callback(static function (array $options): bool {
+          $fields_are_valid = FALSE;
+          foreach ($options['multipart'] as $part) {
+            if ($part['name'] === 'fields') {
+              $fields_are_valid = $part['contents'] === '{}';
+            }
+            if ($part['name'] === 'data' && is_resource($part['contents'])) {
+              fclose($part['contents']);
+            }
+          }
+          return $fields_are_valid;
+        }),
+      )
+      ->willReturn(new Response(200, [], '{"file_id":"file_456","status":"PENDING"}'));
+    try {
+      $result = $this->createClient($http_client)->uploadDocument(
+        'secret',
+        'collection_123',
+        $path,
+        'document.txt',
+        'text/plain',
+      );
+      self::assertSame('file_456', $result['file_id']);
+    }
+    finally {
+      unlink($path);
+    }
+  }
+
+  /**
+   * Tests recovery when xAI reports identical content already uploaded.
+   */
+  public function testReusesExistingIdenticalDocument(): void {
+    $path = tempnam(sys_get_temp_dir(), 'grok-doc-test-');
+    file_put_contents($path, 'document');
+    $http_client = $this->createMock(ClientInterface::class);
+    $http_client->method('request')->willThrowException(new RequestException(
+      'Conflict',
+      new Request('POST', 'https://management-api.x.ai/v1/collections/collection_123/documents'),
+      new Response(409, [], 'A file with identical content already exists in this collection (file_id: file_existing-123).'),
+    ));
+    try {
+      $result = $this->createClient($http_client)->uploadDocument(
+        'secret',
+        'collection_123',
+        $path,
+        'document.txt',
+        'text/plain',
+      );
+      self::assertSame('file_existing-123', $result['file_id']);
+      self::assertTrue($result['reused_existing']);
+    }
+    finally {
+      unlink($path);
+    }
+  }
+
+  /**
    * Tests Collection creation with the documented request shape.
    */
   public function testCreatesCollection(): void {

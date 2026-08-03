@@ -85,11 +85,11 @@ final class AddDocumentForm extends FormBase {
       '#type' => 'textarea',
       '#title' => $this->t('Document metadata (JSON object)'),
       '#default_value' => '{}',
-      '#description' => $this->t('Optional key/value fields for this document. These values override matching Collection defaults.'),
+      '#description' => $this->t('Optional flat key/value fields for this document. Values may be strings, numbers, or booleans and override matching Collection defaults.'),
       '#rows' => 6,
       '#resizable' => 'vertical',
       '#attributes' => [
-        'placeholder' => "{\n  \"department\": \"legal\",\n  \"year\": 2026\n}",
+        'placeholder' => "{\n  \"department\": \"legal\",\n  \"year\": \"2026\"\n}",
         'spellcheck' => 'false',
       ],
     ];
@@ -115,7 +115,7 @@ final class AddDocumentForm extends FormBase {
       MetadataJson::decodeObject((string) $form_state->getValue('metadata'));
     }
     catch (\Throwable) {
-      $form_state->setErrorByName('metadata', $this->t('Metadata must be a valid JSON object.'));
+      $form_state->setErrorByName('metadata', $this->t('Metadata must be a flat JSON object containing only strings, numbers, or booleans.'));
     }
 
     $file = $this->loadFile($form_state);

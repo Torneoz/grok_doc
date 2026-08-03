@@ -103,11 +103,11 @@ final class GrokCollectionForm extends EntityForm {
       '#type' => 'textarea',
       '#title' => $this->t('Default metadata (JSON object)'),
       '#default_value' => $collection->get('default_metadata') ?: '{}',
-      '#description' => $this->t('Optional key/value fields applied to every imported document. Use <code>{}</code> for no defaults. Batch metadata overrides matching keys.'),
+      '#description' => $this->t('Optional flat key/value fields applied to every imported document. Values may be strings, numbers, or booleans. Batch metadata overrides matching keys.'),
       '#rows' => 6,
       '#resizable' => 'vertical',
       '#attributes' => [
-        'placeholder' => "{\n  \"department\": \"legal\",\n  \"year\": 2026\n}",
+        'placeholder' => "{\n  \"department\": \"legal\",\n  \"year\": \"2026\"\n}",
         'spellcheck' => 'false',
       ],
     ];
@@ -146,7 +146,7 @@ final class GrokCollectionForm extends EntityForm {
       MetadataJson::decodeObject((string) $form_state->getValue('default_metadata'));
     }
     catch (\Throwable) {
-      $form_state->setErrorByName('default_metadata', $this->t('Metadata must be a valid JSON object.'));
+      $form_state->setErrorByName('default_metadata', $this->t('Metadata must be a flat JSON object containing only strings, numbers, or booleans.'));
     }
   }
 

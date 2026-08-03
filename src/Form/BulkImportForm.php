@@ -77,11 +77,11 @@ final class BulkImportForm extends FormBase {
       '#type' => 'textarea',
       '#title' => $this->t('Batch metadata (JSON object)'),
       '#default_value' => '{}',
-      '#description' => $this->t('Optional key/value fields for every document in this batch. Use <code>{}</code> for none. These values override matching Collection defaults.'),
+      '#description' => $this->t('Optional flat key/value fields for every document in this batch. Use <code>{}</code> for none. Values may be strings, numbers, or booleans.'),
       '#rows' => 6,
       '#resizable' => 'vertical',
       '#attributes' => [
-        'placeholder' => "{\n  \"department\": \"legal\",\n  \"year\": 2026\n}",
+        'placeholder' => "{\n  \"department\": \"legal\",\n  \"year\": \"2026\"\n}",
         'spellcheck' => 'false',
       ],
     ];
@@ -106,7 +106,7 @@ final class BulkImportForm extends FormBase {
       MetadataJson::decodeObject((string) $form_state->getValue('metadata'));
     }
     catch (\Throwable) {
-      $form_state->setErrorByName('metadata', $this->t('Metadata must be a valid JSON object.'));
+      $form_state->setErrorByName('metadata', $this->t('Metadata must be a flat JSON object containing only strings, numbers, or booleans.'));
     }
     $collection = $this->entityTypeManager->getStorage('grok_doc_collection')->load($form_state->getValue('collection'));
     $total = 0;

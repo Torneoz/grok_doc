@@ -26,7 +26,37 @@ final class MetadataJson {
     catch (\JsonException $exception) {
       throw new \InvalidArgumentException('The metadata is not valid JSON.', 0, $exception);
     }
-    return is_array($decoded) ? $decoded : [];
+    return self::normalizeFields(is_array($decoded) ? $decoded : []);
+  }
+
+  /**
+   * Converts xAI Collection fields to a flat string map.
+   *
+   * @throws \InvalidArgumentException
+   *   When a field contains an array, object, or null value.
+   */
+  public static function normalizeFields(array $fields): array {
+    $normalized = [];
+    foreach ($fields as $key => $value) {
+      if (!is_scalar($value)) {
+        throw new \InvalidArgumentException('Metadata values must be strings, numbers, or booleans.');
+      }
+      $normalized[(string) $key] = is_bool($value)
+        ? ($value ? 'true' : 'false')
+        : (string) $value;
+    }
+    return $normalized;
+  }
+
+  /**
+   * Encodes fields as the JSON object required by the xAI Management API.
+   */
+  public static function encodeFields(array $fields): string {
+    $object = new \stdClass();
+    foreach (self::normalizeFields($fields) as $key => $value) {
+      $object->{$key} = $value;
+    }
+    return json_encode($object, JSON_THROW_ON_ERROR);
   }
 
 }
