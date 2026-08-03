@@ -17,6 +17,12 @@ grok_doc.import:
     - entity.grok_doc_document.collection
     - entity.grok_doc_collection.collection
 
+grok_doc.document_add:
+  route_name: grok_doc.document_add
+  title: 'Add document'
+  appears_on:
+    - entity.grok_doc_document.collection
+
 grok_doc.process:
   route_name: grok_doc.process
   title: 'Process queue'

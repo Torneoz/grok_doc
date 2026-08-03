@@ -81,8 +81,9 @@ setting.
 
 Open **Grok collections** beneath the settings menu to create or register a
 Collection. Use **List remote collections** to inspect and register Collections
-visible to the selected key, then use **Bulk import**. Cron processes queued
-files; administrators may also run a bounded queue batch manually.
+visible to the selected key. The Documents list provides **Add document** for a
+single file and **Import documents** for batches. Cron processes queued files;
+administrators may also run a bounded queue batch manually.
 
 ## Security and cost notes
 

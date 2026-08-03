@@ -54,6 +54,14 @@ entity.grok_doc_document.collection:
   requirements:
     _permission: 'view grok collection status'
 
+grok_doc.document_add:
+  path: '/admin/config/ai/grok/documents/add'
+  defaults:
+    _form: '\Drupal\grok_doc\Form\AddDocumentForm'
+    _title: 'Add Collection document'
+  requirements:
+    _permission: 'upload grok collection documents'
+
 grok_doc.import:
   path: '/admin/config/ai/grok/documents/import'
   defaults:

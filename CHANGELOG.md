@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0-alpha2 (unreleased)
+
+- Adds an **Add document** action to the Collection Documents list for
+  selecting a Collection, uploading one file, adding optional metadata, and
+  queueing ingestion through the existing duplicate and size safeguards.
+
 ## 1.0.0-alpha1
 
 - Initial standalone project extraction from the Grok AI Provider repository.
