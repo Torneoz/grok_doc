@@ -24,36 +24,45 @@ make those searches useful.
 
 ## Installation
 
-Install the project, create a least-privilege xAI Management API key in Drupal
-Key, and grant only the upstream permissions required by the intended workflow.
-Collection creation, listing, deletion, and document ingestion require their
-corresponding Management API permissions.
+Until the first packaged alpha is published, add the GitHub repository to the
+Drupal project and install the `1.x` development branch:
 
 ```bash
-composer require drupal/grok_doc:^1.0@alpha
+composer config repositories.grok_doc vcs https://github.com/Torneoz/grok_doc.git
+composer require torneoz/grok_doc:1.x-dev
 ```
 
 ```bash
-drush en grok_doc
+drush en grok_doc -y
 ```
 
-Visit **Configuration → AI → Grok collections** to create or register a
-Collection. Use **List remote collections** to inspect and register Collections
-visible to a selected key, then use **Bulk import**. Cron processes queued files;
-administrators may also run a bounded queue batch from the process route during
-alpha testing.
+## Configuration
 
-Use **Configuration → AI → Grok Collections settings** to select the default
-Drupal Key used for xAI Management API operations and configure API timeouts,
-file and batch limits, retry attempts, and manual queue batch size. The default
+Grok Collections appears under **Configuration → AI → AI Platform Providers →
+Grok Collections settings**. Select the default Drupal Key used for xAI
+Management API operations and configure API timeouts, file and batch limits,
+retry attempts, and manual queue batch size. The key is required. The default
 key and batch limit prepopulate new Collection registrations; Collection-level
 values remain explicit overrides.
 
-The settings page is listed under **AI → AI Platform Providers**. It requires a
-separate xAI Management API key: the normal Grok inference key does not authorize
-Collections management. Create the key in the xAI Console Management Keys page,
-grant only the required Collections permissions, then store it through Drupal
-Key.
+The normal Grok inference API key does not authorize Collections management.
+Create a separate Management API key on the
+[xAI Console Management Keys page](https://console.x.ai/team/default/settings/management-keys),
+grant `AddFileToCollection` and only the additional Collections Endpoint
+permissions required by the intended workflow, then store the secret through
+Drupal Key. The [xAI Collections API guide](https://docs.x.ai/developers/files/collections/api)
+documents the current permissions and Management API workflow.
+
+Use **Test Collections connection** before saving. The test makes a read-only
+Collections list request and reports either the number of accessible remote
+Collections or the upstream error; it never changes remote data.
+
+## Collection management and ingestion
+
+Open **Grok collections** beneath the settings menu to create or register a
+Collection. Use **List remote collections** to inspect and register Collections
+visible to the selected key, then use **Bulk import**. Cron processes queued
+files; administrators may also run a bounded queue batch manually.
 
 ## Security and cost notes
 
