@@ -20,9 +20,9 @@ final class GrokCollectionForm extends EntityForm {
   /**
    * Constructs the Collection form. */
   public function __construct(
-    private readonly KeyRepositoryInterface $keyRepository,
-    private readonly XaiCollectionsClient $client,
-    private readonly ConfigFactoryInterface $settingsConfigFactory,
+    protected KeyRepositoryInterface $keyRepository,
+    protected XaiCollectionsClient $client,
+    protected ConfigFactoryInterface $settingsConfigFactory,
   ) {}
 
   /**

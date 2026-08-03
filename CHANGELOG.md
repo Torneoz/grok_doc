@@ -2,6 +2,8 @@
 
 ## 1.0.0-alpha2 (unreleased)
 
+- Fixes AJAX form rebuilds losing injected services, including managed-file
+  uploads on the single and bulk document forms.
 - Adds an **Add document** action to the Collection Documents list for
   selecting a Collection, uploading one file, adding optional metadata, and
   queueing ingestion through the existing duplicate and size safeguards.

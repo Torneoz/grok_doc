@@ -23,10 +23,10 @@ final class RemoteCollectionsForm extends FormBase {
    * Constructs the remote Collections form.
    */
   public function __construct(
-    private readonly KeyRepositoryInterface $keyRepository,
-    private readonly XaiCollectionsClient $client,
-    private readonly EntityTypeManagerInterface $entityTypeManager,
-    private readonly ConfigFactoryInterface $settingsConfigFactory,
+    protected KeyRepositoryInterface $keyRepository,
+    protected XaiCollectionsClient $client,
+    protected EntityTypeManagerInterface $entityTypeManager,
+    protected ConfigFactoryInterface $settingsConfigFactory,
   ) {}
 
   /**

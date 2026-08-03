@@ -19,8 +19,8 @@ final class ProcessQueueForm extends ConfirmFormBase {
   /**
    * Constructs the manual queue form. */
   public function __construct(
-    private readonly QueueFactory $queueFactory,
-    private readonly CollectionDocumentManager $manager,
+    protected QueueFactory $queueFactory,
+    protected CollectionDocumentManager $manager,
   ) {}
 
   /**

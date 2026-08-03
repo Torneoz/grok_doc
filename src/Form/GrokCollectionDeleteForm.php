@@ -22,10 +22,12 @@ final class GrokCollectionDeleteForm extends EntityConfirmFormBase {
    * Constructs the Collection deletion form.
    */
   public function __construct(
-    private readonly KeyRepositoryInterface $keyRepository,
-    private readonly XaiCollectionsClient $client,
-    private readonly EntityTypeManagerInterface $entityTypeManager,
-  ) {}
+    protected KeyRepositoryInterface $keyRepository,
+    protected XaiCollectionsClient $client,
+    EntityTypeManagerInterface $entity_type_manager,
+  ) {
+    $this->setEntityTypeManager($entity_type_manager);
+  }
 
   /**
    * {@inheritdoc}

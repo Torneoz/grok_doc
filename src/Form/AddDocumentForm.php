@@ -22,9 +22,9 @@ final class AddDocumentForm extends FormBase {
    * Constructs the single-document form.
    */
   public function __construct(
-    private readonly EntityTypeManagerInterface $entityTypeManager,
-    private readonly CollectionDocumentManager $manager,
-    private readonly AccountProxyInterface $currentUser,
+    protected EntityTypeManagerInterface $entityTypeManager,
+    protected CollectionDocumentManager $manager,
+    protected AccountProxyInterface $currentUser,
   ) {}
 
   /**

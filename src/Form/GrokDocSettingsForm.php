@@ -24,8 +24,8 @@ final class GrokDocSettingsForm extends ConfigFormBase {
   public function __construct(
     ConfigFactoryInterface $config_factory,
     TypedConfigManagerInterface $typed_config_manager,
-    private readonly KeyRepositoryInterface $keyRepository,
-    private readonly XaiCollectionsClient $client,
+    protected KeyRepositoryInterface $keyRepository,
+    protected XaiCollectionsClient $client,
   ) {
     parent::__construct($config_factory, $typed_config_manager);
   }
