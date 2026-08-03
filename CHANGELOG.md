@@ -2,6 +2,8 @@
 
 ## 1.0.0-alpha2 (unreleased)
 
+- Replaces the removed legacy `format_size()` helper with Drupal's
+  `ByteSizeMarkup` API on the Collection Documents list.
 - Fixes AJAX form rebuilds losing injected services, including managed-file
   uploads on the single and bulk document forms.
 - Adds an **Add document** action to the Collection Documents list for

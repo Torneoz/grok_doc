@@ -9,6 +9,7 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityListBuilder;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
+use Drupal\Core\StringTranslation\ByteSizeMarkup;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -48,7 +49,7 @@ final class GrokDocumentListBuilder extends EntityListBuilder {
       'filename' => $entity->label(),
       'collection' => $entity->getCollectionId(),
       'status' => $entity->getStatus(),
-      'size' => format_size((int) $entity->get('size')->value),
+      'size' => ByteSizeMarkup::create((int) $entity->get('size')->value),
       'attempts' => (int) $entity->get('attempts')->value,
       'changed' => $this->dateFormatter->format((int) $entity->getChangedTime(), 'short'),
     ];
