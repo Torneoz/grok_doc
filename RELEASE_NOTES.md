@@ -1,23 +1,22 @@
-# Grok Collections 1.0.0-alpha2
+# Grok Collections 1.0.0-alpha3
 
-Alpha 2 improves the reliability and usability of xAI Collection document
-ingestion while retaining the explicit, least-privilege controls introduced in
-the first alpha.
+Alpha 3 strengthens installation diagnostics, uninstall cleanup, and document
+queue processing while preserving the existing Collection-management workflow.
 
 ## Highlights
 
-- Adds **Add document** to the Collection Documents list for queueing a single
-  Drupal-managed file with optional metadata.
-- Adds a bounded **Process the ingestion queue immediately** option to single
-  and bulk upload forms. Outstanding indexing checks continue through cron.
-- Recovers the existing xAI file ID after an identical-content response so an
-  interrupted request can resume indexing without duplicating remote content.
-- Sends empty metadata as the xAI-required JSON object `{}` rather than `[]` and
-  validates metadata values before upload.
-- Fixes injected form services after AJAX rebuilds and replaces the removed
-  legacy file-size formatter with Drupal's supported `ByteSizeMarkup` API.
-- Handles HTTP clients that close consumed multipart streams after a successful
-  upload response.
+- Makes Drupal's status report resilient when entity storage or a queue backend
+  is temporarily unavailable.
+- Shows failed ingestion records and pending queue depth in the status report.
+- Cleans up the ingestion queue during uninstall without making an unavailable
+  backend block module removal.
+- Prevents stranded pending records by rolling back document creation when
+  queue insertion fails.
+- Delays retries where the queue backend supports it and releases items safely
+  after unexpected failures instead of risking loss or repeated hot-looping.
+- Removes malformed queue items without aborting the rest of a manual batch and
+  reports processed, requeued, failed, and discarded counts separately.
+- Adds regression tests around retry and malformed queue-item behavior.
 
 ## Existing capabilities
 

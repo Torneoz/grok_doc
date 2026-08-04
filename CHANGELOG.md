@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.0.0-alpha3 - 2026-08-04
+
+- Hardens runtime requirements reporting so missing entity storage or an
+  unavailable queue backend is reported instead of breaking the status page.
+- Reports both failed ingestion records and pending queue depth through
+  Drupal's status report.
+- Removes the ingestion queue during uninstall without blocking uninstall when
+  a queue backend is already unavailable.
+- Rolls back newly created document records when queue insertion fails,
+  preventing permanently stranded pending records.
+- Delays retryable queue items where supported and safely releases items after
+  unexpected processing failures instead of deleting and recreating them.
+- Discards malformed queue payloads safely and adds clearer manual-processing
+  counts for processed, requeued, failed, and discarded items.
+- Adds focused regression coverage for queue retry and malformed-item handling.
+
 ## 1.0.0-alpha2 - 2026-08-03
 
 - Adds a bounded **Process the ingestion queue immediately** control to the
